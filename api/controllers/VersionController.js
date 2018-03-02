@@ -9,6 +9,7 @@ var actionUtil = require('sails/lib/hooks/blueprints/actionUtil');
 var url = require('url');
 var Promise = require('bluebird');
 var semver = require('semver');
+var compareVersions = require('compare-versions');
 
 module.exports = {
 
@@ -28,6 +29,87 @@ module.exports = {
     }
 
     return res.redirect('/update/' + platform + '/' + version);
+  },
+
+  /**
+   * Sorts versions and returns pages sorted by by sermver
+   *
+   * ( GET /versions/sorted )
+   */
+  list: function (req, res) {
+    Version
+      .find()
+      .then(versions => {
+        var count = versions.length;
+        var page = req.param('page') || req.query.page || 0;
+        var start = page * sails.config.views.pageSize;
+        var end = start + sails.config.views.pageSize;
+        var items = versions
+          .sort(function (a, b) {
+            return -compareVersions(a.name, b.name);
+          })
+          .slice(start, end);
+
+        const response = {
+          total: count,
+          offset: start,
+          page: page,
+          items: items
+        }
+
+        return Promise.all([
+          // load channels
+          new Promise(function (resolve, reject) {
+            Promise.all(items.map(function (version) {
+              return Channel.findOne({
+                name: version.channel
+              })
+            }))
+            .then(resolve)
+            .catch(reject)
+          }),
+          // load assets
+          new Promise(function (resolve, reject) {
+            Promise.all(items.map(function (version) {
+              return Asset.find({
+                version: version.name
+              })
+            }))
+            .then(resolve)
+            .catch(reject)
+          })
+        ])
+        .then(function (results) {
+          response.items = response.items.map(function (item, index) {
+            return {
+              channel: results[0][index],
+              assets: results[1][index].map(function (asset) {
+                return {
+                  name: asset.name,
+                  platform: asset.platform,
+                  filetype: asset.filetype,
+                  hash: asset.hash,
+                  size: asset.size,
+                  download_count: asset.download_count,
+                  fd: asset.fd,
+                  createdAt: asset.createdAt,
+                  updatedAt: asset.updatedAt
+                }
+              }),
+              name: item.name,
+              notes: item.notes,
+              createdAt: item.createdAt,
+              updatedAt: item.updatedAt
+            }
+          })
+
+          return response
+        })
+      })
+      .then(response => {
+        res.send(response);
+      })
+      .catch(res.negotiate);
   },
 
   /**
