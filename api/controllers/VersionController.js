@@ -88,6 +88,7 @@ module.exports = {
                   name: asset.name,
                   platform: asset.platform,
                   filetype: asset.filetype,
+                  sha512: asset.sha512,
                   hash: asset.hash,
                   size: asset.size,
                   download_count: asset.download_count,
@@ -430,6 +431,7 @@ module.exports = {
           var latestYml = "version: " + latestVersion.name
                           + "\nreleaseDate: " + latestVersion.updatedAt
                           + "\npath: " + downloadPath
+                          + "\nsha512: " + (asset.sha512 || '')
                           + "\nsha2: " + sha2;
           res.ok(latestYml);
         } else {
@@ -502,6 +504,7 @@ module.exports = {
           var latestYml = "version: " + latestVersion.name
                           + "\nreleaseDate: " + latestVersion.updatedAt
                           + "\npath: " + downloadPath
+                          + "\nsha512: " + (asset.sha512 || '')
                           + "\nsha2: " + sha2;
           res.ok(latestYml);
         } else {

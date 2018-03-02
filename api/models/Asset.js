@@ -31,6 +31,10 @@ module.exports = {
       type: 'string'
     },
 
+    sha512: {
+      type: 'string'
+    },
+
     size: {
       type: 'integer',
       required: true

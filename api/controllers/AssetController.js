@@ -214,13 +214,18 @@ module.exports = {
           hashPromise = Promise.resolve('');
         }
 
-        hashPromise
-          .then(function(fileHash) {
+        sha512Promise = Asset.getHash(uploadedFile.fd, 'sha512');
+
+        Promise.all([
+          hashPromise,
+          sha512Promise,
+        ]).then(function([fileHash, sha512]) {
             // Create new instance of model using data from params
             Asset
               .create(_.merge({
                 name: uploadedFile.filename,
                 hash: fileHash,
+                sha512: sha512,
                 filetype: fileExt,
                 fd: uploadedFile.fd,
                 size: uploadedFile.size
